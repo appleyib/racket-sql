@@ -20,13 +20,13 @@
 
 (define-syntax Or
   (syntax-rules ()
-  ((Or a b c)
-  (or a b c))))
+  ((Or a b)
+   (If a #t b))))
 
 (define-syntax And
   (syntax-rules ()
-  ((And a b c)
-  (and a b c))))
+  ((And a b)
+  (If a b #f))))
 ; Please do define And, Or as syntactic forms
 ; We have actually done this in class you may use the class code and this week's lab code for this.
   
@@ -95,6 +95,7 @@ A function that takes:
   and returns a new table containing only the tuples in 'table'
   that satisfy 'f'.
 |#
+(define (satisfy? f table)(filter f (tuples table)))
 
 #|
 A function 'replace-attr' that takes:
@@ -106,6 +107,7 @@ A function 'replace-attr' that takes:
       in the tuple.
     - Otherwise, just ignore the tuple and return 'x'.
 |#
+(define (replace-attr x a) (lambda(tuple) (if (sameAttrInList? x a) (h1 a x tuple) x)))
 
 
 ; select and its helper functions start
@@ -145,22 +147,22 @@ A function 'replace-attr' that takes:
 
 ;-------------------------------------------
 ; FROM and its helper function starts here
-(define (sameAttrInTable? attr headTuple)
+(define (sameAttrInList? attr headTuple)
   (If (equal? (length headTuple) 1)
       (equal? (first headTuple) attr)
       (If (equal? (first headTuple) attr)
           #t
-          (sameAttrInTable? attr (rest headTuple))
+          (sameAttrInList? attr (rest headTuple))
           )
       )
   )
 
-(define (sameAttrExist? attr tupleList)
-  (If (equal? (length tupleList) 1)
-      (sameAttrInTable? attr (first tupleList))
-      (If (sameAttrInTable? attr (first tupleList))
+(define (sameAttrExist? attr tableHeadList)
+  (If (equal? (length tableHeadList) 1)
+      (sameAttrInList? attr (first tableHeadList))
+      (If (sameAttrInList? attr (first tableHeadList))
           #t
-          (sameAttrExist? attr (rest tupleList))
+          (sameAttrExist? attr (rest tableHeadList))
           )
       )
   )
@@ -205,6 +207,23 @@ A function 'replace-attr' that takes:
 ;(makeResultHead '("23" "34" "45") (list (list "2" "3") (list "test1" "23") (list "3" "test1")))
 ;(from '("23" "34" "45") (list(list (list "b" "3") (list 1 2) (list 3 4)) (list (list "a" "b") (list 5 6) (list 7 8)) (list (list "a" "d") (list 9 10) (list 11 12))))
 
+
+
+
+;-------------------------------------------
+; WHERE and its helper function starts here
+
+(define (replaceAll expression atts)
+  (if (list? expression)
+      (lambda(tuple) ((first expression) ((replaceAll (second expression) atts) tuple) ((replaceAll (third expression) atts) tuple)))
+      (replace-attr expression atts)
+      )
+  )
+
+(define (where table expression) (satisfy? (replaceAll expression (attributes table)) table))
+;(replaceAll (list equal? "a" "c") (list "a" "b" "c")) 
+;(replaceAll (list equal? (list + "a" "b") "c") (list "a" "b" "c"))
+;(where (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list equal? (list + "a" "b") "c"))
 ; Starter for Part 3; feel free to ignore!
 
 
