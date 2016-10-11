@@ -70,46 +70,8 @@
 
 (define t1 '(("a" "b" "c")(1 2 3)(4 5 6)(7 8 9)))
 
-; Part I "WHERE" helpers; you may or may not wish to implement these.
 
-#|
-A function that takes: 
-  - a list of attributes
-  - a string (representing an attribute)
-  - a tuple
-
-  and returns the value of the tuple corresponding to that attribute.
-|#
-(define (h1 atts att tup)
-  (if (equal? att (first atts))
-      (first tup)
-      (h1 (rest atts) att (rest tup))))
-
-;(h1 '("a" "b" "c") "a" '(1 2 3))
-
-#|
-A function that takes:
-  - f: a unary function that takes a tuple and returns a boolean value
-  - table: a valid table
-
-  and returns a new table containing only the tuples in 'table'
-  that satisfy 'f'.
-|#
-(define (satisfy? f table)(filter f (tuples table)))
-
-#|
-A function 'replace-attr' that takes:
-  - x 
-  - a list of attributes
-
-  and returns a function 'f' which takes a tuple and does the following:
-    - If 'x' is in the list of attributes, return the corrresponding value 
-      in the tuple.
-    - Otherwise, just ignore the tuple and return 'x'.
-|#
-(define (replace-attr x a) (lambda(tuple) (if (sameAttrInList? x a) (h1 a x tuple) x)))
-
-
+;--------------------------------------
 ; select and its helper functions start
 (define (GetOneColumn att table atts)
   (if (empty? table)
@@ -212,18 +174,68 @@ A function 'replace-attr' that takes:
 
 ;-------------------------------------------
 ; WHERE and its helper function starts here
+; Part I "WHERE" helpers; you may or may not wish to implement these.
+
+#|
+A function that takes: 
+  - a list of attributes
+  - a string (representing an attribute)
+  - a tuple
+
+  and returns the value of the tuple corresponding to that attribute.
+|#
+(define (h1 atts att tup)
+  (if (equal? att (first atts))
+      (first tup)
+      (h1 (rest atts) att (rest tup))))
+
+;(h1 '("a" "b" "c") "a" '(1 2 3))
+
+#|
+A function that takes:
+  - f: a unary function that takes a tuple and returns a boolean value
+  - table: a valid table
+
+  and returns a new table containing only the tuples in 'table'
+  that satisfy 'f'.
+|#
+(define (satisfy? f table)(filter f (tuples table)))
+
+#|
+A function 'replace-attr' that takes:
+  - x 
+  - a list of attributes
+
+  and returns a function 'f' which takes a tuple and does the following:
+    - If 'x' is in the list of attributes, return the corrresponding value 
+      in the tuple.
+    - Otherwise, just ignore the tuple and return 'x'.
+|#
+(define (replace-attr x a) (lambda(tuple) (if (sameAttrInList? x a) (h1 a x tuple) x)))
+
 
 (define (replaceAll expression atts)
   (if (list? expression)
-      (lambda(tuple) ((first expression) ((replaceAll (second expression) atts) tuple) ((replaceAll (third expression) atts) tuple)))
+      (lambda(tuple) (apply (first expression) (map (lambda(item) ((replaceAll item atts) tuple)) (rest expression))))
       (replace-attr expression atts)
       )
   )
 
 (define (where table expression) (satisfy? (replaceAll expression (attributes table)) table))
+
+;-------------------------------------------
+; Order and its helper function starts here
+(define (function-sort functions arg) (sort functions < #:key (lambda(x) (x arg))))
+
+(define (order table expression)
+  (sort (tuples table) > #:key (replaceAll expression (attributes table)))
+  )
+
 ;(replaceAll (list equal? "a" "c") (list "a" "b" "c")) 
 ;(replaceAll (list equal? (list + "a" "b") "c") (list "a" "b" "c"))
 ;(where (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list equal? (list + "a" "b") "c"))
+;(where (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list equal? (list + 1 "a" "b") "c"))
+;(order (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list - 5 "c"))
 ; Starter for Part 3; feel free to ignore!
 
 
