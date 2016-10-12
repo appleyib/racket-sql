@@ -68,8 +68,6 @@
 (define (size table)
   ((lambda(x)(- x 1)) (length table)))
 
-(define t1 '(("a" "b" "c")(1 2 3)(4 5 6)(7 8 9)))
-
 
 ;--------------------------------------
 ; select and its helper functions start
@@ -100,10 +98,6 @@
       (if (equal? attlst (attributes table))
           table
           (CombineAllColumn attlst table))))
-
-;(select "*" t1)
-;(select '("a") t1)
-
 
 
 
@@ -216,7 +210,10 @@ A function 'replace-attr' that takes:
 
 (define (replaceAll expression atts)
   (if (list? expression)
-      (lambda(tuple) (apply (first expression) (map (lambda(item) ((replaceAll item atts) tuple)) (rest expression))))
+      (if (empty? expression)
+          (lambda(tuple) #t)
+          (lambda(tuple) (apply (first expression) (map (lambda(item) ((replaceAll item atts) tuple)) (rest expression))))
+          )
       (replace-attr expression atts)
       )
   )
@@ -225,17 +222,20 @@ A function 'replace-attr' that takes:
 
 ;-------------------------------------------
 ; Order and its helper function starts here
-(define (function-sort functions arg) (sort functions < #:key (lambda(x) (x arg))))
-
 (define (order table expression)
-  (sort (tuples table) > #:key (replaceAll expression (attributes table)))
+  (cond
+    [(equal? (size table) 0) table]
+    [(string? ((replaceAll expression (attributes table)) (first (tuples table)))) (sort (tuples table) string>? #:key (replaceAll expression (attributes table)))]
+    [else (sort (tuples table) > #:key (replaceAll expression (attributes table)))]
+    )
   )
 
 ;(replaceAll (list equal? "a" "c") (list "a" "b" "c")) 
 ;(replaceAll (list equal? (list + "a" "b") "c") (list "a" "b" "c"))
 ;(where (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list equal? (list + "a" "b") "c"))
 ;(where (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list equal? (list + 1 "a" "b") "c"))
-;(order (list (list "a" "b" "c") (list 1 2 5) (list 1 2 4) (list 1 2 3) (list 2 2 4)) (list - 5 "c"))
+;(order (list (list "a" "b" "c") (list "a" 2 5) (list "b" 2 4) (list "c" 2 3) (list "bes" 2 4)) (list - 5 "c"))
+;(order (list (list "a" "b" "c") (list "a" 2 5) (list "b" 2 4) (list "c" 2 3) (list "bes" 2 4)) "a")
 ; Starter for Part 3; feel free to ignore!
 
 
